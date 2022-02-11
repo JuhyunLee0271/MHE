@@ -1,9 +1,10 @@
 import telegram, time
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackQueryHandler
+from pyowm import OWM
+import requests
 
 
-API_KEY = "478279052ea6562636f94d63e0b3ccad"
 """
 # Bot name: stock-bot
 # username: dev_jh_stock_bot
@@ -13,6 +14,8 @@ with open('token_id.txt', 'rt') as f:
     text = f.readlines()
     TOKEN = str(text[0].split('=')[-1].strip('\n')[2:-1])
     CHAT_ID = str(text[1].split('=')[-1].strip('\n')[2:-1])
+
+WEATHER_API_KEY = "cb7685dd2aef284e5946c10e5a3e559d"
 
 class TelegramBot:
     def __init__(self):
@@ -68,12 +71,20 @@ class TelegramBot:
                 self.core.send_message(text="매물을 수집했습니다", chat_id=CHAT_ID)
         
     def weather(self, update, context):
-        longitude = 37.3849391
-        latitude = 126.642785
-
-        self.core.send_location(chat_id=CHAT_ID, longitude=longitude, latitude=latitude)
-
+        latitude = 37.3849391
+        longitude = 126.642785
         
+        # Weather Info API
+        owm = OWM(WEATHER_API_KEY)
+        manager = owm.weather_manager()
+        observation = manager.weather_at_coords(latitude, longitude)
+        location = observation.location
+        weather = observation.weather
+        
+        self.core.send_location(chat_id=CHAT_ID, longitude=longitude, latitude=latitude)
+        self.core.send_message(chat_id=CHAT_ID, text=F"{location.country}/{location.name}")
+        self.core.send_message(chat_id=CHAT_ID, text=F"min temperature: {str(weather.temp['temp_max'] - 273.15)}, max temperature: {str(weather.temp['temp_min'] - 273.15)}")
+        self.core.send_message(chat_id=CHAT_ID, text=F"{weather.detailed_status}")
 
 
 if __name__ == "__main__":
