@@ -1,8 +1,10 @@
-import telegram, time
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, WebhookInfo
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackQueryHandler
+import telegram, time, os
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackQueryHandler, ConversationHandler
 from pyowm import OWM
 from stock_scrapper import Scrapper
+import matplotlib.pyplot as plt
+
 
 WEATHER_API_KEY = "cb7685dd2aef284e5946c10e5a3e559d"
 with open('token_id.txt', 'rt') as f:
@@ -42,36 +44,43 @@ class TelegramBot:
             
     def stock(self, update, context):
         buttons = [[
-            InlineKeyboardButton('1. 종목 조회', callback_data=1),
-            InlineKeyboardButton('2. 시세 조회', callback_data=2)
+            InlineKeyboardButton('1. 종목 조회', callback_data = 1),
+            InlineKeyboardButton('2. 시세 조회', callback_data = 2)
         ], [
-            InlineKeyboardButton('3. 취소', callback_data=3)
+            InlineKeyboardButton('3. 취소', callback_data = 3)
         ]]
 
         reply_markup = InlineKeyboardMarkup(buttons)
-        self.core.send_message(chat_id=CHAT_ID, text='선택해주세요', reply_markup = reply_markup)
+        self.core.send_message(chat_id=CHAT_ID, text = '선택해주세요', reply_markup = reply_markup)
     
     def callback_button(self, update, context):
         data = update.callback_query.data
         
+        # 거래대금 상위 10개 종목의 OHLCV 
         if data == '1':
-            date, Top10 = self.scrapper.getOHLCV()
-            text = ""
-            for e in Top10:
-                text += str(e[0]) + " " + str(e[1]) + " " + str(e[2]) + " " + str(e[3]) + ";"
-            text = text.replace(';', '\n')
-
-            self.core.edit_message_text(text = F"{date} - 거래 대금 상위 10개 종목", 
+            date, text = self.scrapper.getOHLCV()
+            
+            self.core.edit_message_text(text = F"{date}\n거래 대금 상위 10개 종목", 
                                         chat_id = update.callback_query.message.chat_id,
                                         message_id = update.callback_query.message.message_id)
             self.core.send_message(text = F"{text}", chat_id = CHAT_ID)
-                                        
 
+        # 해당 종목의 60일간 추이
         elif data == '2':
-            pass
+            self.core.edit_message_text(text = "조회할 종목명을 입력해주세요 (예: 삼성전자)", 
+                                        chat_id = update.callback_query.message.chat_id,
+                                        message_id = update.callback_query.message.message_id)
+            
+            self.scrapper.getTrend("SK하이닉스")
+            if os.path.exists('result.png'):
+                self.core.send_photo(chat_id=CHAT_ID, photo = open('result.png', 'rb'))
+                os.remove('result.png')
+            else:
+                self.core.send_message(text = F"Error!", chat_id = CHAT_ID)
+    
         elif data == '3':
             pass
-        
+    
     def weather(self, update, context):
         latitude = 37.3849391
         longitude = 126.642785
