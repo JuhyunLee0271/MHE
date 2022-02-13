@@ -11,6 +11,7 @@ class Scrapper:
         self.code = stock.get_market_ticker_list(market="KOSPI") + stock.get_market_ticker_list(market="KOSDAQ")
         self.dict = {code: stock.get_market_ticker_name(code) for code in self.code}  # {'005930': '삼성전자', ... }    
         self.today = datetime.now()
+        self.favorite = ['035420', '035720', '000660'] # NAVER, KAKAO, SKHynix
 
     # 가장 최근 날짜의 거래 대금 상위 10개 
     def getOHLCV(self):
@@ -67,6 +68,7 @@ class Scrapper:
             plt.xlabel("날짜")
             plt.ylabel("종가")
             plt.savefig('result.png', dpi=200)
+            plt.clf()
     
         else:
             return None
