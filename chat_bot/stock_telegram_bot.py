@@ -31,11 +31,7 @@ class TelegramBot:
 
         cb_select_handler = CallbackQueryHandler(self.callback_select)
         self.dispatcher.add_handler(cb_select_handler)
-
-    def run(self):
-        self.updater.start_polling()
-        self.updater.idle()
-    
+            
     def initial_option(self, update, context):
         buttons = [
             [InlineKeyboardButton('1. 주식 조회', callback_data = 'stock')],
@@ -59,12 +55,10 @@ class TelegramBot:
         data = update.callback_query.data
         
         if data == 'stock':
-            self.stock(update, context)
-            return
+            return self.stock(update, context)
         
         elif data == 'weather':
-            self.weather(update, context)
-            return
+            return self.weather(update, context)
 
         # 거래대금 상위 10개 종목의 OHLCV 
         if data == 'stock_1':
@@ -86,8 +80,8 @@ class TelegramBot:
                 buttons.append([InlineKeyboardButton(F"{i+1}. {self.stock_scrapper.dict[self.stock_scrapper.favorite[i]]}", 
                                                     callback_data = self.stock_scrapper.favorite[i])])
             reply_markup = InlineKeyboardMarkup(buttons)
-            self.core.send_message(chat_id=CHAT_ID, text = '종목을 선택 해주세요', reply_markup = reply_markup)            
-            return
+            self.core.send_message(chat_id=CHAT_ID, text = '종목을 선택 해주세요', reply_markup = reply_markup)
+            return self.callback_select(update, context)
         
         elif data == 'stock_3':
             self.core.edit_message_text(text = "취소합니다.", 
@@ -110,7 +104,8 @@ class TelegramBot:
             self.core.send_message(chat_id=CHAT_ID,
                                     text=F"Location: {location}" + "\n" + F"Description: {status}" + "\n" + F"Temperature: {str(round((temperature - 273.15),1)) + '℃' }" + "\n" + F"Humidity: {humidity}")
         
-        self.initial_option(update, context)
+        return self.initial_option(update, context)
+        
             
     def weather(self, update, context):
         buttons = []
@@ -120,8 +115,8 @@ class TelegramBot:
         reply_markup = InlineKeyboardMarkup(buttons)
         self.core.send_message(chat_id=CHAT_ID, text = '위치를 선택 해주세요', reply_markup = reply_markup)
     
-    
-                
 if __name__ == "__main__":
     bot = TelegramBot()
-    bot.run()
+    bot.updater.start_polling()
+    bot.updater.idle()
+    
