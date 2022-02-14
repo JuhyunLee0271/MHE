@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import dates
 
-class Scrapper:
+class Stock:
     
     def __init__(self):
         self.code = stock.get_market_ticker_list(market="KOSPI") + stock.get_market_ticker_list(market="KOSDAQ")
@@ -73,8 +73,3 @@ class Scrapper:
         else:
             return None
 
-        
-if __name__ == "__main__":
-    sc = Scrapper()
-    sc.getTrend("삼성전자")
-        
